@@ -7,13 +7,18 @@
     android:orientation="vertical"
     tools:context="com.example.asiantech.videoedit.MainActivity">
 
-    <SeekBar
-        android:id="@+id/seekBar"
+    <!--<SeekBar-->
+        <!--android:id="@+id/seekBar"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="100dp"-->
+        <!--android:layout_marginTop="100dp"-->
+        <!--android:max="100"-->
+        <!--android:thumb="@drawable/ic_rectangle"-->
+        <!--android:progressDrawable="@drawable/custom_seekbar"-->
+        <!--android:thumbTintMode="multiply" />-->
+    
+    <com.example.asiantech.videoedit.utils.CustomSeekBarView
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_marginTop="100dp"
-        android:max="100"
-        android:thumb="@drawable/ic_rectangle"
-        android:progressDrawable="@drawable/custom_seekbar"
-        android:thumbTintMode="multiply" />
+        android:layout_height="100dp" />
+
 </LinearLayout>
