@@ -1,6 +1,7 @@
 package com.example.asiantech.videoedit.utils;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -40,7 +41,9 @@ public class CustomSeekBarView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         drawBackground(canvas);
-        drawThumb(canvas);
+        if (canvas != null) {
+            mReferDrawView.getCanvasDraw(canvas);
+        }
     }
 
     private void drawBackground(Canvas canvas) {
@@ -49,9 +52,10 @@ public class CustomSeekBarView extends View {
         canvas.drawRect(mWidthImgStart, mHightImgStart, mWidthMax, mHightMax, mPaint);
     }
 
-    private void drawThumb(Canvas canvas) {
-        setPaint(Color.BLACK, 20, Paint.Style.FILL);
+    public void drawThumb(Canvas canvas) {
+        setPaint(Color.BLACK, 20, Paint.Style.STROKE);
         canvas.drawRect(mWidthImgStart + mCurrentWidth, mHightImgStart, 150 + mCurrentWidth, mHightMax, mPaint);
+        invalidate();
     }
 
 
@@ -68,6 +72,26 @@ public class CustomSeekBarView extends View {
                 break;
         }
         return true;
+    }
+
+    public void drawImage(Canvas mCanvas, Bitmap... bitmaps) {
+        int width = getWidth() - 30;
+        int height = 300;
+        int w = width / bitmaps.length;
+        for (int i = 0; i < bitmaps.length; i++) {
+            Bitmap img = Bitmap.createScaledBitmap(bitmaps[i], w, height, false);
+            mCanvas.drawBitmap(img, 10 + i * w, 10, null);
+        }
+    }
+
+    public interface referDrawView {
+        void getCanvasDraw(Canvas canvas);
+    }
+
+    public referDrawView mReferDrawView;
+
+    public void setOnLick(referDrawView referDrawView) {
+        this.mReferDrawView = referDrawView;
     }
 
 }
