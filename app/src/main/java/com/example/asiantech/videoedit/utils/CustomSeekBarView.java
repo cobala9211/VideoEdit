@@ -44,6 +44,8 @@ public class CustomSeekBarView extends View {
         if (canvas != null) {
             mReferDrawView.getCanvasDraw(canvas);
         }
+        DrawRightView(canvas);
+        DrawLeftView(canvas);
     }
 
     private void drawBackground(Canvas canvas) {
@@ -54,7 +56,7 @@ public class CustomSeekBarView extends View {
 
     public void drawThumb(Canvas canvas) {
         setPaint(Color.BLACK, 20, Paint.Style.STROKE);
-        canvas.drawRect(mWidthImgStart + mCurrentWidth, mHightImgStart, 150 + mCurrentWidth, mHightMax, mPaint);
+        canvas.drawRect(getWidth() / 2 - 75, 10, getWidth() / 2 + 75, mHightMax, mPaint);
         invalidate();
     }
 
@@ -76,11 +78,9 @@ public class CustomSeekBarView extends View {
 
     public void drawImage(Canvas mCanvas, Bitmap... bitmaps) {
         int width = getWidth() - 30;
-        int height = 300;
         int w = width / bitmaps.length;
         for (int i = 0; i < bitmaps.length; i++) {
-            Bitmap img = Bitmap.createScaledBitmap(bitmaps[i], w, height, false);
-            mCanvas.drawBitmap(img, 10 + i * w, 10, null);
+            mCanvas.drawBitmap(bitmaps[i], 10 + i * w, 10, null);
         }
     }
 
@@ -93,5 +93,16 @@ public class CustomSeekBarView extends View {
     public void setOnLick(referDrawView referDrawView) {
         this.mReferDrawView = referDrawView;
     }
+
+    public void DrawLeftView(Canvas canvas) {
+        setPaint(Color.BLUE, 20, Paint.Style.FILL);
+        canvas.drawRect(10 + mCurrentWidth, 10, 50 + mCurrentWidth, 300, mPaint);
+    }
+
+    public void DrawRightView(Canvas canvas) {
+        setPaint(Color.BLUE, 20, Paint.Style.FILL);
+        canvas.drawRect(getWidth() - mCurrentWidth - 50, 10, getWidth() - mCurrentWidth, 300, mPaint);
+    }
+
 
 }
