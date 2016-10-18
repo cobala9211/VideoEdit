@@ -180,6 +180,7 @@ public class CustomSeekBarView extends View {
         } else {
             drawPointStart(canvas);
             drawPointEnd(canvas);
+//            drawEditCurrent(Canvas canvas);
         }
     }
 
@@ -202,6 +203,19 @@ public class CustomSeekBarView extends View {
                     pointEnd.setX(currentValue);
                     invalidate();
                 }
+
+//                currentValue = (int) event.getX();
+//                invalidate();
+//                isTouch = true;
+//                pointStart.setX1(currentValue);
+//                if (pointStart.getX1() - 10 < currentValue && currentValue < pointStart.getX1() + 10) {
+//                    pointStart.setX1(currentValue);
+//                    invalidate();
+//                }
+//                if (pointEnd.getX1() - 10 < currentValue && currentValue < pointEnd.getX1() + 10) {
+//                    pointEnd.setX1(currentValue);
+//                    invalidate();
+//                }
                 break;
             default:
                 isTouch = false;
@@ -403,4 +417,34 @@ public class CustomSeekBarView extends View {
     public void setSaveState(boolean state) {
         this.stateSave = state;
     }
+
+//    private void drawPointStart(Canvas canvas) {
+//        canvas.drawLine(pointStart.getX1(), 0, pointStart.getX1(), barHeight + 70, barEditEndPaint);
+//        invalidate();
+//    }
+//
+//    private void drawPointEnd(Canvas canvas) {
+//        canvas.drawLine(pointEnd.getX1(), 0, pointEnd.getX1(), barHeight + 70, barEditEndPaint);
+//        invalidate();
+//    }
+//
+//    private static class Points {
+//        private int x1;
+//
+//        public int getX1() {
+//            return x1;
+//        }
+//
+//        public void setX1(int x1) {
+//            this.x1 = x1;
+//        }
+
+//    }
+
+//    private void drawEditCurrent(Canvas canvas) {
+//        barEditStartPaint.setColor(ContextCompat.getColor(mContext, R.color.colorThumb));
+//        barEditStartPaint.setMaskFilter(new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL));
+//        canvas.drawRect(pointStart.getX1(), 0, pointEnd.getX1(), barHeight + 70, barEditStartPaint);
+//        invalidate();
+//    }
 }
