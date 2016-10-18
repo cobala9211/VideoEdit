@@ -37,4 +37,5 @@
     <dimen name="value_bar_padding_horizontal">12dp</dimen>
     <dimen name="value_bar_spaceAfterBar">14dp</dimen>
     <dimen name="video_view_height">300dp</dimen>
+    <dimen name="tickFontSize">30dp</dimen>
 </resources>

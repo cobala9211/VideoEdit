@@ -10,6 +10,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -20,6 +21,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+
+
+import static android.view.MotionEvent.ACTION_MOVE;
 
 /**
  * Copyright © 2016 AsianTech inc.
@@ -48,17 +52,20 @@ public class CustomSeekBarView extends View {
     private Paint barThumbPointPaint;
     private Paint barThumbProcessPaint;
 
+    // draw ruler
     private Paint barRulerTimePaint;
     private Paint barRulerPointPaint;
     private Paint barRulerTextPaint;
 
     private boolean isEdit = false;
+    private boolean isDrawThumb = false;
 
     private Paint barEditStartPaint;
     private Paint barEditEndPaint;
 
     private Points pointStart;
     private Points pointEnd;
+    private int lengthRuler;
 
     public CustomSeekBarView(Context context) {
         super(context);
@@ -104,7 +111,7 @@ public class CustomSeekBarView extends View {
         //thumb
         widthThumb = typedArray.getDimensionPixelSize(R.styleable.CustomValueBarView_widthThumb, 0);
 
-        //tai tao lai
+        //recycle
         typedArray.recycle();
 
         // setbar
@@ -164,7 +171,6 @@ public class CustomSeekBarView extends View {
 
     @Override
     protected void onDraw(final Canvas canvas) {
-
         drawBar(canvas);
         drawRulerTime(canvas);
         drawImage(canvas, listBitmaps);
@@ -185,8 +191,8 @@ public class CustomSeekBarView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
-            case MotionEvent.ACTION_MOVE | MotionEvent.ACTION_DOWN:
-                currentValue = (int) event.getX();
+            case ACTION_MOVE:
+                currentValue = (int) event.getX() - (widthThumb);
                 invalidate();
                 isTouch = true;
                 if (!stateSave) {
@@ -214,19 +220,18 @@ public class CustomSeekBarView extends View {
         }
     }
 
+    /**
+     * @param canvas draw ruler
+     */
     private void drawRulerTime(Canvas canvas) {
-        int lengthRuler = getWidth() - widthThumb / 2;
-        canvas.drawLine(0, 60, getWidth(), 60, barRulerTimePaint);
+        lengthRuler = getWidth() - widthThumb;
+        //  canvas.drawLine(0, 60, getWidth(), 60, barRulerTimePaint);
         canvas.drawLine(widthThumb / 2, 60, widthThumb / 2, 20, barRulerPointPaint);
         canvas.drawText("00:00", widthThumb / 2, 20, barRulerTextPaint);
-        canvas.drawLine(lengthRuler, 60, lengthRuler, 20, barRulerPointPaint);
+        canvas.drawLine(widthThumb / 2, 60, lengthRuler, 60, barRulerPointPaint);
         canvas.drawText(milliSecondsToTimer(timeDuration), lengthRuler, 20, barRulerTextPaint);
 
         for (int i = widthThumb / 2; i < lengthRuler; i++) {
-//            if (i % 200 == 0) {
-//                canvas.drawLine(widthThumb / 2+i, 60, widthThumb / 2 + i, 20, barRulerPointPaint);
-//                canvas.drawText("03:84", widthThumb / 2 + i,20, barRulerTextPaint);
-//            }
             if (i % 60 == 0) {
                 canvas.drawLine(widthThumb / 2 + i, 60, widthThumb / 2 + i, 30, barRulerPointPaint);
             }
@@ -238,9 +243,6 @@ public class CustomSeekBarView extends View {
         barThumbPaint.setStyle(Paint.Style.STROKE);
         barThumbPaint.setStrokeWidth(10);
 
-        if (widthThumb + currentValue > getWidth()) {
-            currentValue = getWidth() - widthThumb;
-        }
         if (!isTouch) {
             canvas.drawRect(widthThumb / 2, barHeight + 50, widthThumb / 2 + count, barHeight + 70, barThumbProcessPaint);
             canvas.drawRect(count, 65, widthThumb + count, barHeight + 55, barThumbPaint);
@@ -251,13 +253,13 @@ public class CustomSeekBarView extends View {
             canvas.drawLine(widthThumb / 2 + count, 60, widthThumb / 2 + count, 0, barThumbPointPaint);
             invalidate();
         } else {
-            canvas.drawRect(widthThumb / 2, barHeight + 50, widthThumb / 2 + currentValue, barHeight + 70, barThumbProcessPaint);
-            canvas.drawRect(currentValue, 65, widthThumb + currentValue, barHeight + 55, barThumbPaint);
             canvas.drawCircle(widthThumb / 2 + currentValue, barHeight - barHeight / 8 + 45, widthThumb / 4, barThumbCyclerPaint);
             canvas.drawLine(widthThumb / 2 + currentValue, barHeight - barHeight / 8 + 45, widthThumb / 2 + currentValue, barHeight + 70, barThumbPointPaint);
             canvas.drawText(milliSecondsToTimer(timeCurrent), widthThumb / 2 + currentValue, barHeight - barHeight / 8 + 45, barThumbTextPaint);
+            Log.d("tag", "time curent " + timeCurrent);
             canvas.drawLine(widthThumb / 2 + currentValue, 60, widthThumb / 2 + currentValue, 0, barThumbPointPaint);
             invalidate();
+
         }
     }
 
@@ -298,19 +300,28 @@ public class CustomSeekBarView extends View {
             }
             if (isTouch) {
                 count = currentValue;
-                timeCurrent = currentValue * 1000;
-            }
-            count++;
-            timeCurrent += DELAY_TIME_MILLIS;
-            invalidate();
-            if (updateView) {
-                postDelayed(this, DELAY_TIME_MILLIS);
-            }
-            if (widthThumb + count > getWidth() - 40) {
-                count = getWidth() - widthThumb;
-                return;
+                updateView = true;
+                timeCurrent = ((currentValue * timeDuration) / (lengthRuler));
+                if (count > lengthRuler) {
+                    updateView = false;
+                }
+            } else {
+                if (count <= lengthRuler && timeCurrent <= timeDuration) {
+                    count = count + (lengthRuler * 1000 / (float) timeDuration);
+                    timeCurrent += DELAY_TIME_MILLIS;
+                    invalidate();
+                } else {
+                    updateView = false;
+                }
+
             }
 
+            if (updateView)
+
+            {
+                postDelayed(this, DELAY_TIME_MILLIS);
+                Log.d("tag", "update view" + updateView);
+            }
         }
     }
 
@@ -323,8 +334,8 @@ public class CustomSeekBarView extends View {
 
     @Override
     public void onDetachedFromWindow() {
-        updateView = false;
         super.onDetachedFromWindow();
+        updateView = false;
     }
 
     private long timeDuration;
@@ -341,6 +352,10 @@ public class CustomSeekBarView extends View {
 
     public void setIsEdit(boolean edit) {
         isEdit = edit;
+    }
+
+    public void setIsDrawThumb(boolean drawThumb) {
+        isDrawThumb = drawThumb;
     }
 
     private void drawPointStart(Canvas canvas) {
@@ -360,16 +375,16 @@ public class CustomSeekBarView extends View {
     private static class Points {
         private int x, y;
 
-        public Points(int x, int y) {
+        Points(int x, int y) {
             this.x = x;
             this.y = y;
         }
 
-        public int getX() {
+        int getX() {
             return x;
         }
 
-        public void setX(int x) {
+        void setX(int x) {
             this.x = x;
         }
 
@@ -380,6 +395,7 @@ public class CustomSeekBarView extends View {
         public void setY(int y) {
             this.y = y;
         }
+
     }
 
     private boolean stateSave = false;
