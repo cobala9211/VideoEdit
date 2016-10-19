@@ -60,8 +60,8 @@ public class MainActivity extends AppCompatActivity {
             case R.id.mnuEditVideo:
                 seekBarLayout.setIsEdit(true);
                 break;
-            case R.id.mnuSaveState:
-                seekBarLayout.setSaveState(true);
+            case R.id.mnuEditVideos:
+                seekBarLayout.setEditVideos(true);
                 break;
             default:
                 break;

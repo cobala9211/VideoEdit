@@ -7,11 +7,9 @@
     <item
         android:id="@+id/mnuEditVideo"
         android:icon="@mipmap/ic_launcher"
-        android:showAsAction="ifRoom"
         android:title="@string/menu_item_edit_video" />
     <item
-        android:id="@+id/mnuSaveState"
+        android:id="@+id/mnuEditVideos"
         android:icon="@mipmap/ic_launcher"
-        android:showAsAction="ifRoom"
         android:title="@string/menu_item_save_state" />
 </menu>

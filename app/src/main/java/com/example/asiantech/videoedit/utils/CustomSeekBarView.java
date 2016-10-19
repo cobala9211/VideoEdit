@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -164,8 +166,8 @@ public class CustomSeekBarView extends View {
         barEditEndPaint.setColor(Color.BLUE);
         barEditEndPaint.setStrokeWidth(5);
 
-        pointStart = new Points(0, 0);
-        pointEnd = new Points(670, 0);
+        pointStart = new Points(50);
+        pointEnd = new Points(650);
     }
 
 
@@ -175,12 +177,13 @@ public class CustomSeekBarView extends View {
         drawRulerTime(canvas);
         drawImage(canvas, listBitmaps);
         if (!isEdit) {
-            drawThumb(canvas);
+//            drawThumb(canvas);
+            drawPointStart(canvas);
             invalidate();
         } else {
+            drawEditCurrent(canvas);
             drawPointStart(canvas);
             drawPointEnd(canvas);
-//            drawEditCurrent(Canvas canvas);
         }
     }
 
@@ -193,29 +196,24 @@ public class CustomSeekBarView extends View {
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case ACTION_MOVE:
-                currentValue = (int) event.getX() - (widthThumb);
+
+                currentValue = (int) event.getX();
                 invalidate();
                 isTouch = true;
-                if (!stateSave) {
-                    pointStart.setX(currentValue);
-                    invalidate();
+                if (isEdit) {
+                    if (pointStart.getX() - 20 < currentValue && currentValue < pointStart.getX() + 20
+                            && pointStart.getX() + 20 < pointEnd.getX() - 100) {
+                        pointStart.setX(currentValue);
+                        invalidate();
+                    }
+                    if (pointEnd.getX() - 20 < currentValue && currentValue < pointEnd.getX() + 20
+                            && pointEnd.getX() - 40 > pointStart.getX() + 100) {
+                        pointEnd.setX(currentValue);
+                        invalidate();
+                    }
                 } else {
-                    pointEnd.setX(currentValue);
-                    invalidate();
+                    pointStart.setX(currentValue);
                 }
-
-//                currentValue = (int) event.getX();
-//                invalidate();
-//                isTouch = true;
-//                pointStart.setX1(currentValue);
-//                if (pointStart.getX1() - 10 < currentValue && currentValue < pointStart.getX1() + 10) {
-//                    pointStart.setX1(currentValue);
-//                    invalidate();
-//                }
-//                if (pointEnd.getX1() - 10 < currentValue && currentValue < pointEnd.getX1() + 10) {
-//                    pointEnd.setX1(currentValue);
-//                    invalidate();
-//                }
                 break;
             default:
                 isTouch = false;
@@ -224,6 +222,8 @@ public class CustomSeekBarView extends View {
 
         return true;
     }
+
+    private boolean isChoiceVideo = false;
 
     public void drawImage(Canvas canvas, Bitmap... bitmaps) {
         int width = getWidth() - 10;
@@ -303,17 +303,15 @@ public class CustomSeekBarView extends View {
     private boolean updateView = false;
     private UpdateViewRunnable updateViewRunnable = new UpdateViewRunnable();
     private Paint paint = new Paint();
-    private float count;
+    private float count = 50;
     private long timeCurrent = 0;
 
     private class UpdateViewRunnable implements Runnable {
         public void run() {
-            if (isEdit) {
-                count = 0;
-                timeCurrent = 0;
-            }
+
             if (isTouch) {
                 count = currentValue;
+                pointStart.setX((int) count);
                 updateView = true;
                 timeCurrent = ((currentValue * timeDuration) / (lengthRuler));
                 if (count > lengthRuler) {
@@ -322,11 +320,18 @@ public class CustomSeekBarView extends View {
             } else {
                 if (count <= lengthRuler && timeCurrent <= timeDuration) {
                     count = count + (lengthRuler * 1000 / (float) timeDuration);
+                    pointStart.setX((int) count);
                     timeCurrent += DELAY_TIME_MILLIS;
                     invalidate();
                 } else {
                     updateView = false;
                 }
+            }
+
+            if (isEdit) {
+                pointStart.setX((int) count);
+                updateView = false;
+                return;
 
             }
 
@@ -373,9 +378,9 @@ public class CustomSeekBarView extends View {
     }
 
     private void drawPointStart(Canvas canvas) {
-        canvas.drawLine(widthThumb / 2 + pointStart.getX(), 0, widthThumb / 2 + pointStart.getX(), barHeight + 70, barEditStartPaint);
+        canvas.drawLine(pointStart.getX(), 0, pointStart.getX(), barHeight + 70, barEditStartPaint);
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_edit);
-        canvas.drawBitmap(bitmap, widthThumb / 2 + pointStart.getX() - 26, (barHeight + 70) / 2, null);
+        canvas.drawBitmap(bitmap, pointStart.getX() - 26, (barHeight + 70) / 2, null);
         invalidate();
     }
 
@@ -387,11 +392,10 @@ public class CustomSeekBarView extends View {
     }
 
     private static class Points {
-        private int x, y;
+        private int x;
 
-        Points(int x, int y) {
+        Points(int x) {
             this.x = x;
-            this.y = y;
         }
 
         int getX() {
@@ -402,49 +406,18 @@ public class CustomSeekBarView extends View {
             this.x = x;
         }
 
-        public int getY() {
-            return y;
-        }
-
-        public void setY(int y) {
-            this.y = y;
-        }
-
     }
 
     private boolean stateSave = false;
 
-    public void setSaveState(boolean state) {
+    public void setEditVideos(boolean state) {
         this.stateSave = state;
     }
 
-//    private void drawPointStart(Canvas canvas) {
-//        canvas.drawLine(pointStart.getX1(), 0, pointStart.getX1(), barHeight + 70, barEditEndPaint);
-//        invalidate();
-//    }
-//
-//    private void drawPointEnd(Canvas canvas) {
-//        canvas.drawLine(pointEnd.getX1(), 0, pointEnd.getX1(), barHeight + 70, barEditEndPaint);
-//        invalidate();
-//    }
-//
-//    private static class Points {
-//        private int x1;
-//
-//        public int getX1() {
-//            return x1;
-//        }
-//
-//        public void setX1(int x1) {
-//            this.x1 = x1;
-//        }
-
-//    }
-
-//    private void drawEditCurrent(Canvas canvas) {
-//        barEditStartPaint.setColor(ContextCompat.getColor(mContext, R.color.colorThumb));
-//        barEditStartPaint.setMaskFilter(new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL));
-//        canvas.drawRect(pointStart.getX1(), 0, pointEnd.getX1(), barHeight + 70, barEditStartPaint);
-//        invalidate();
-//    }
+    private void drawEditCurrent(Canvas canvas) {
+        barEditStartPaint.setColor(ContextCompat.getColor(mContext, R.color.colorThumb));
+        barEditStartPaint.setMaskFilter(new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL));
+        canvas.drawRect(pointStart.getX(), 0, pointEnd.getX(), barHeight + 70, barEditStartPaint);
+        invalidate();
+    }
 }
