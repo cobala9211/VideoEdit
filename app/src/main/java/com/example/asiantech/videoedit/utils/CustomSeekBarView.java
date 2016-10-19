@@ -13,6 +13,7 @@ import android.graphics.Paint;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -24,7 +25,9 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 
+import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_UP;
 
 /**
  * Copyright © 2016 AsianTech inc.
@@ -47,6 +50,7 @@ public class CustomSeekBarView extends View {
 
     // touch
     private boolean mIsTouch = false;
+
 
     private Paint mBarThumbCyclePaint;
     private Paint mBarThumbTextPaint;
@@ -187,23 +191,43 @@ public class CustomSeekBarView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
+
             case ACTION_MOVE:
                 mCurrentPosition = (int) event.getX() - (mWidthThumb);
                 invalidate();
                 mIsTouch = true;
                 if (mIsEdit) {
                     if (mCurrentPosition >= (mWidthThumb / 2)
-                            && mCurrentPosition <= (mPointEnd.getX() - mWidthThumb)) {
+                            && mCurrentPosition < (mPointEnd.getX() - (mWidthThumb * 2))) {
                         mPointStart.setX(mCurrentPosition);
+                        Log.d("tag", "aa");
                         invalidate();
-                    } else if (mCurrentPosition <= mLengthRuler && mCurrentPosition >= (mPointStart.getX() + mWidthThumb)) {
+                    } else if (mCurrentPosition > (mPointStart.getX() + mWidthThumb * 2)) {
                         mPointEnd.setX(mCurrentPosition);
+                        Log.d("tag", "bb");
                         invalidate();
                     }
-                } else {
-                    mPointStart.setX(mCurrentPosition);
+                    return true;
                 }
                 break;
+            case ACTION_UP:
+                mCurrentPosition = (int) event.getX() - (mWidthThumb);
+                invalidate();
+                mIsTouch = true;
+                if (mIsEdit) {
+                    if (mCurrentPosition >= (mWidthThumb / 2)
+                            && mCurrentPosition < (mPointEnd.getX() - (mWidthThumb * 2))) {
+                        mPointStart.setX(mCurrentPosition);
+                        Log.d("tag", "aa");
+                        invalidate();
+                    } else if (mCurrentPosition > (mPointStart.getX() + mWidthThumb * 2)) {
+                        mPointEnd.setX(mCurrentPosition);
+                        Log.d("tag", "bb");
+                        invalidate();
+                    }
+
+                }
+                return true;
             default:
                 mIsTouch = false;
                 break;
@@ -231,7 +255,7 @@ public class CustomSeekBarView extends View {
         mLengthRuler = mWidthScreen - mWidthThumb;
         canvas.drawLine(mWidthThumb / 2, 0, mWidthThumb / 2, (mBarHeight / 3), mBarRulerPointPaint);
         canvas.drawText("00:00", mWidthThumb / 2, 20, mBarRulerTextPaint);
-        canvas.drawLine(mWidthThumb / 2, 60, mLengthRuler, 60, mBarRulerPointPaint);
+        //  canvas.drawLine(mWidthThumb / 2, 60, mLengthRuler, 60, mBarRulerPointPaint);
         canvas.drawText(milliSecondsToTimer(mTimeDuration), mLengthRuler, 20, mBarRulerTextPaint);
         for (int i = mWidthThumb / 2; i < mLengthRuler; i++) {
             if (i % 60 == 0) {
@@ -250,21 +274,18 @@ public class CustomSeekBarView extends View {
         mBarThumbPaint.setStrokeWidth(10);
 
         if (!mIsTouch) {
-            canvas.drawRect(mWidthThumb / 2, mBarHeight + 50, mWidthThumb / 2 + mCount, mBarHeight + 70, mBarThumbProcessPaint);
-            canvas.drawRect(mCount, 65, mWidthThumb + mCount, mBarHeight + 55, mBarThumbPaint);
             canvas.drawCircle(mWidthThumb / 2 + mCount, mBarHeight - mBarHeight / 8 + 45, mWidthThumb / 4, mBarThumbCyclePaint);
-            canvas.drawLine(mWidthThumb / 2 + mCount, mBarHeight - mBarHeight / 8 + 45, mWidthThumb / 2 + mCount, mBarHeight + 70, mBarThumbPointPaint);
+            canvas.drawLine(mWidthThumb / 2 + mCount, 0, mWidthThumb / 2 + mCount, mBarHeight + 51, mBarThumbPointPaint);
             canvas.drawText(milliSecondsToTimer(mTimeCurrent), mWidthThumb / 2 + mCount, mBarHeight - mBarHeight / 8 + 45, mBarThumbTextPaint);
-            canvas.drawLine(mWidthThumb / 2 + mCount, 60, mWidthThumb / 2 + mCount, 0, mBarThumbPointPaint);
             invalidate();
         } else {
             canvas.drawCircle(mWidthThumb / 2 + mCurrentPosition, mBarHeight - mBarHeight / 8 + 45, mWidthThumb / 4, mBarThumbCyclePaint);
-            canvas.drawLine(mWidthThumb / 2 + mCurrentPosition, mBarHeight - mBarHeight / 8 + 45, mWidthThumb / 2 + mCurrentPosition, mBarHeight + 70, mBarThumbPointPaint);
+            canvas.drawLine(mWidthThumb / 2 + mCurrentPosition, 0, mWidthThumb / 2 + mCurrentPosition, mBarHeight + 51, mBarThumbPointPaint);
             canvas.drawText(milliSecondsToTimer(mTimeCurrent), mWidthThumb / 2 + mCurrentPosition, mBarHeight - mBarHeight / 8 + 45, mBarThumbTextPaint);
-            canvas.drawLine(mWidthThumb / 2 + mCurrentPosition, 60, mWidthThumb / 2 + mCurrentPosition, 0, mBarThumbPointPaint);
             invalidate();
 
         }
+
     }
 
     /**
