@@ -14,6 +14,7 @@ import android.widget.VideoView;
 
 import com.example.asiantech.videoedit.utils.CustomSeekBarView;
 
+
 public class MainActivity extends AppCompatActivity {
     private CustomSeekBarView seekBarLayout;
 
@@ -60,9 +61,6 @@ public class MainActivity extends AppCompatActivity {
             case R.id.mnuEditVideo:
                 seekBarLayout.setIsEdit(true);
                 break;
-            case R.id.mnuEditVideos:
-                seekBarLayout.setEditVideos(true);
-                break;
             default:
                 break;
         }
@@ -75,4 +73,3 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 }
-

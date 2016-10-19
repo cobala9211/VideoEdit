@@ -1,5 +1,6 @@
 package com.example.asiantech.videoedit.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -12,11 +13,9 @@ import android.graphics.Paint;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.example.asiantech.videoedit.MainActivity;
 import com.example.asiantech.videoedit.R;
 
 import java.text.SimpleDateFormat;
@@ -33,41 +32,51 @@ import static android.view.MotionEvent.ACTION_MOVE;
  */
 public class CustomSeekBarView extends View {
 
-    //max and current value
-    private int maxValue = 100;
-    private int currentValue = 0;
-    private int barHeight;
+    private int mCurrentPosition = 0;
+    private int mBarHeight;
 
     //width thumb
-    private int widthThumb;
-    private Paint barThumbPaint;
-    private Paint barBackgroundPaint;
-    private Paint barFramePaint;
+    private int mWidthThumb;
+    private Paint mBarThumbPaint;
+    private Paint mBarBackgroundPaint;
+    private Paint mBarFramePaint;
     private Context mContext;
 
-    private Bitmap[] listBitmaps;
+    //arrays bitmaps
+    private Bitmap[] mListBitmaps;
 
-    private boolean isTouch = false;
+    // touch
+    private boolean mIsTouch = false;
 
-    private Paint barThumbCyclerPaint;
-    private Paint barThumbTextPaint;
-    private Paint barThumbPointPaint;
-    private Paint barThumbProcessPaint;
+    private Paint mBarThumbCyclePaint;
+    private Paint mBarThumbTextPaint;
+    private Paint mBarThumbPointPaint;
+    private Paint mBarThumbProcessPaint;
 
     // draw ruler
-    private Paint barRulerTimePaint;
-    private Paint barRulerPointPaint;
-    private Paint barRulerTextPaint;
+    private Paint mBarRulerTimePaint;
+    private Paint mBarRulerPointPaint;
+    private Paint mBarRulerTextPaint;
 
-    private boolean isEdit = false;
-    private boolean isDrawThumb = false;
+    // edit
+    private boolean mIsEdit = false;
 
-    private Paint barEditStartPaint;
-    private Paint barEditEndPaint;
+    private Paint mBarEditStartPaint;
+    private Paint mBarEditEndPaint;
 
-    private Points pointStart;
-    private Points pointEnd;
-    private int lengthRuler;
+    // draw point start and point end to cut video
+    private Points mPointStart;
+    private Points mPointEnd;
+
+    // length ruler
+    private int mLengthRuler;
+
+    //width screen
+    private int mWidthScreen;
+
+    // time duration
+    private long mTimeDuration;
+
 
     public CustomSeekBarView(Context context) {
         super(context);
@@ -79,23 +88,6 @@ public class CustomSeekBarView extends View {
         super(context, attrs);
         init(context, attrs);
         this.mContext = context;
-
-    }
-
-    /**
-     * This method setvalue bar
-     *
-     * @param newValue
-     */
-    public void setValue(int newValue) {
-        if (newValue < 0) {
-            currentValue = 0;
-        } else if (newValue > maxValue) {
-            currentValue = maxValue;
-        } else {
-            currentValue = newValue;
-        }
-        invalidate();
     }
 
     /**
@@ -108,66 +100,68 @@ public class CustomSeekBarView extends View {
         setSaveEnabled(true);
         //read xml attributes
         TypedArray typedArray = context.getTheme().obtainStyledAttributes(attrs, R.styleable.CustomValueBarView, 0, 0);
-        barHeight = typedArray.getDimensionPixelSize(R.styleable.CustomValueBarView_barHeight, 0);
+        mBarHeight = typedArray.getDimensionPixelSize(R.styleable.CustomValueBarView_barHeight, 0);
 
         //thumb
-        widthThumb = typedArray.getDimensionPixelSize(R.styleable.CustomValueBarView_widthThumb, 0);
+        mWidthThumb = typedArray.getDimensionPixelSize(R.styleable.CustomValueBarView_widthThumb, 0);
 
         //recycle
         typedArray.recycle();
 
         // setbar
-        barThumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barBackgroundPaint.setColor(Color.BLACK);
-        barFramePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarThumbPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarBackgroundPaint.setColor(Color.BLACK);
+        mBarFramePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
         paint.setColor(Color.BLACK);
         paint.setTextSize(80);
 
         //set thumb
-        barThumbCyclerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barThumbCyclerPaint.setColor(Color.RED);
-        barThumbCyclerPaint.setStyle(Paint.Style.FILL);
+        mBarThumbCyclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarThumbCyclePaint.setColor(Color.RED);
+        mBarThumbCyclePaint.setStyle(Paint.Style.FILL);
 
-        barThumbTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barThumbTextPaint.setTextSize(14);
-        barThumbTextPaint.setColor(Color.WHITE);
-        barThumbTextPaint.setTextAlign(Paint.Align.CENTER);
+        mBarThumbTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarThumbTextPaint.setTextSize(14);
+        mBarThumbTextPaint.setColor(Color.WHITE);
+        mBarThumbTextPaint.setTextAlign(Paint.Align.CENTER);
 
-        barThumbPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barThumbPointPaint.setColor(Color.RED);
-        barThumbPointPaint.setStyle(Paint.Style.FILL);
-        barThumbPointPaint.setStrokeWidth(5);
+        mBarThumbPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarThumbPointPaint.setColor(Color.RED);
+        mBarThumbPointPaint.setStyle(Paint.Style.FILL);
+        mBarThumbPointPaint.setStrokeWidth(5);
 
-        barThumbProcessPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barThumbProcessPaint.setColor(Color.RED);
-        barThumbProcessPaint.setStyle(Paint.Style.FILL);
+        mBarThumbProcessPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarThumbProcessPaint.setColor(Color.RED);
+        mBarThumbProcessPaint.setStyle(Paint.Style.FILL);
 
-        barRulerTimePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barRulerTimePaint.setColor(Color.WHITE);
-        barRulerTimePaint.setStrokeWidth(2);
+        mBarRulerTimePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarRulerTimePaint.setColor(Color.WHITE);
+        mBarRulerTimePaint.setStrokeWidth(2);
 
-        barRulerPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barRulerPointPaint.setColor(Color.WHITE);
-        barRulerTimePaint.setStrokeWidth(8);
+        mBarRulerPointPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarRulerPointPaint.setColor(Color.WHITE);
+        mBarRulerTimePaint.setStrokeWidth(8);
 
-        barRulerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barRulerTextPaint.setColor(Color.WHITE);
-        barRulerTextPaint.setTextSize(24);
-        barRulerTextPaint.setTextAlign(Paint.Align.CENTER);
+        mBarRulerTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarRulerTextPaint.setColor(Color.WHITE);
+        mBarRulerTextPaint.setTextSize(24);
+        mBarRulerTextPaint.setTextAlign(Paint.Align.CENTER);
 
         //edit video
-        barEditStartPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barEditStartPaint.setColor(Color.RED);
-        barEditStartPaint.setStrokeWidth(5);
+        mBarEditStartPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarEditStartPaint.setColor(Color.RED);
+        mBarEditStartPaint.setStrokeWidth(5);
 
-        barEditEndPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        barEditEndPaint.setColor(Color.BLUE);
-        barEditEndPaint.setStrokeWidth(5);
-
-        pointStart = new Points(50);
-        pointEnd = new Points(650);
+        mBarEditEndPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarEditEndPaint.setColor(Color.BLUE);
+        mBarEditEndPaint.setStrokeWidth(5);
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        ((Activity) getContext()).getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+        mWidthScreen = displaymetrics.widthPixels;
+        mPointStart = new Points(mWidthThumb / 2);
+        mPointEnd = new Points(mWidthScreen - (mWidthThumb / 2));
     }
 
 
@@ -175,10 +169,9 @@ public class CustomSeekBarView extends View {
     protected void onDraw(final Canvas canvas) {
         drawBar(canvas);
         drawRulerTime(canvas);
-        drawImage(canvas, listBitmaps);
-        if (!isEdit) {
-//            drawThumb(canvas);
-            drawPointStart(canvas);
+        drawImage(canvas, mListBitmaps);
+        if (!mIsEdit) {
+            drawThumb(canvas);
             invalidate();
         } else {
             drawEditCurrent(canvas);
@@ -188,49 +181,46 @@ public class CustomSeekBarView extends View {
     }
 
     private void drawBar(Canvas canvas) {
-        //draw background
-        canvas.drawRect(0, 0, getWidth(), barHeight + 70, barBackgroundPaint);
+        canvas.drawRect(0, 0, getWidth(), mBarHeight, mBarBackgroundPaint);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
             case ACTION_MOVE:
-
-                currentValue = (int) event.getX();
+                mCurrentPosition = (int) event.getX() - (mWidthThumb);
                 invalidate();
-                isTouch = true;
-                if (isEdit) {
-                    if (pointStart.getX() - 20 < currentValue && currentValue < pointStart.getX() + 20
-                            && pointStart.getX() + 20 < pointEnd.getX() - 100) {
-                        pointStart.setX(currentValue);
+                mIsTouch = true;
+                if (mIsEdit) {
+                    if (mCurrentPosition >= (mWidthThumb / 2)
+                            && mCurrentPosition <= (mPointEnd.getX() - mWidthThumb)) {
+                        mPointStart.setX(mCurrentPosition);
                         invalidate();
-                    }
-                    if (pointEnd.getX() - 20 < currentValue && currentValue < pointEnd.getX() + 20
-                            && pointEnd.getX() - 40 > pointStart.getX() + 100) {
-                        pointEnd.setX(currentValue);
+                    } else if (mCurrentPosition <= mLengthRuler && mCurrentPosition >= (mPointStart.getX() + mWidthThumb)) {
+                        mPointEnd.setX(mCurrentPosition);
                         invalidate();
                     }
                 } else {
-                    pointStart.setX(currentValue);
+                    mPointStart.setX(mCurrentPosition);
                 }
                 break;
             default:
-                isTouch = false;
+                mIsTouch = false;
                 break;
         }
 
         return true;
     }
 
-    private boolean isChoiceVideo = false;
-
+    /**
+     * @param canvas  canvas object
+     * @param bitmaps return each bitmap object to draw
+     */
     public void drawImage(Canvas canvas, Bitmap... bitmaps) {
-        int width = getWidth() - 10;
-        int w = width / bitmaps.length;
+        int widthImage = mWidthScreen / bitmaps.length;
         for (int i = 0; i < bitmaps.length; i++) {
-            canvas.drawBitmap(bitmaps[i], i * w, 70,
-                    barFramePaint);
+            canvas.drawBitmap(bitmaps[i], i * widthImage, mBarHeight / 3,
+                    mBarFramePaint);
         }
     }
 
@@ -238,56 +228,61 @@ public class CustomSeekBarView extends View {
      * @param canvas draw ruler
      */
     private void drawRulerTime(Canvas canvas) {
-        lengthRuler = getWidth() - widthThumb;
-        //  canvas.drawLine(0, 60, getWidth(), 60, barRulerTimePaint);
-        canvas.drawLine(widthThumb / 2, 60, widthThumb / 2, 20, barRulerPointPaint);
-        canvas.drawText("00:00", widthThumb / 2, 20, barRulerTextPaint);
-        canvas.drawLine(widthThumb / 2, 60, lengthRuler, 60, barRulerPointPaint);
-        canvas.drawText(milliSecondsToTimer(timeDuration), lengthRuler, 20, barRulerTextPaint);
-
-        for (int i = widthThumb / 2; i < lengthRuler; i++) {
+        mLengthRuler = mWidthScreen - mWidthThumb;
+        canvas.drawLine(mWidthThumb / 2, 0, mWidthThumb / 2, (mBarHeight / 3), mBarRulerPointPaint);
+        canvas.drawText("00:00", mWidthThumb / 2, 20, mBarRulerTextPaint);
+        canvas.drawLine(mWidthThumb / 2, 60, mLengthRuler, 60, mBarRulerPointPaint);
+        canvas.drawText(milliSecondsToTimer(mTimeDuration), mLengthRuler, 20, mBarRulerTextPaint);
+        for (int i = mWidthThumb / 2; i < mLengthRuler; i++) {
             if (i % 60 == 0) {
-                canvas.drawLine(widthThumb / 2 + i, 60, widthThumb / 2 + i, 30, barRulerPointPaint);
+                canvas.drawLine(mWidthThumb / 2 + i, 60, mWidthThumb / 2 + i, 30, mBarRulerPointPaint);
             }
         }
     }
 
+    /**
+     * @param canvas canvas object
+     *               draw thumb
+     */
     public void drawThumb(Canvas canvas) {
-        barThumbPaint.setColor(Color.WHITE);
-        barThumbPaint.setStyle(Paint.Style.STROKE);
-        barThumbPaint.setStrokeWidth(10);
+        mBarThumbPaint.setColor(Color.WHITE);
+        mBarThumbPaint.setStyle(Paint.Style.STROKE);
+        mBarThumbPaint.setStrokeWidth(10);
 
-        if (!isTouch) {
-            canvas.drawRect(widthThumb / 2, barHeight + 50, widthThumb / 2 + count, barHeight + 70, barThumbProcessPaint);
-            canvas.drawRect(count, 65, widthThumb + count, barHeight + 55, barThumbPaint);
-            canvas.drawCircle(widthThumb / 2 + count, barHeight - barHeight / 8 + 45, widthThumb / 4, barThumbCyclerPaint);
-            canvas.drawLine(widthThumb / 2 + count, barHeight - barHeight / 8 + 45, widthThumb / 2 + count, barHeight + 70, barThumbPointPaint);
-            canvas.drawText(milliSecondsToTimer(timeCurrent), widthThumb / 2 + count, barHeight - barHeight / 8 + 45, barThumbTextPaint);
-            //draw line time
-            canvas.drawLine(widthThumb / 2 + count, 60, widthThumb / 2 + count, 0, barThumbPointPaint);
+        if (!mIsTouch) {
+            canvas.drawRect(mWidthThumb / 2, mBarHeight + 50, mWidthThumb / 2 + mCount, mBarHeight + 70, mBarThumbProcessPaint);
+            canvas.drawRect(mCount, 65, mWidthThumb + mCount, mBarHeight + 55, mBarThumbPaint);
+            canvas.drawCircle(mWidthThumb / 2 + mCount, mBarHeight - mBarHeight / 8 + 45, mWidthThumb / 4, mBarThumbCyclePaint);
+            canvas.drawLine(mWidthThumb / 2 + mCount, mBarHeight - mBarHeight / 8 + 45, mWidthThumb / 2 + mCount, mBarHeight + 70, mBarThumbPointPaint);
+            canvas.drawText(milliSecondsToTimer(mTimeCurrent), mWidthThumb / 2 + mCount, mBarHeight - mBarHeight / 8 + 45, mBarThumbTextPaint);
+            canvas.drawLine(mWidthThumb / 2 + mCount, 60, mWidthThumb / 2 + mCount, 0, mBarThumbPointPaint);
             invalidate();
         } else {
-            canvas.drawCircle(widthThumb / 2 + currentValue, barHeight - barHeight / 8 + 45, widthThumb / 4, barThumbCyclerPaint);
-            canvas.drawLine(widthThumb / 2 + currentValue, barHeight - barHeight / 8 + 45, widthThumb / 2 + currentValue, barHeight + 70, barThumbPointPaint);
-            canvas.drawText(milliSecondsToTimer(timeCurrent), widthThumb / 2 + currentValue, barHeight - barHeight / 8 + 45, barThumbTextPaint);
-            Log.d("tag", "time curent " + timeCurrent);
-            canvas.drawLine(widthThumb / 2 + currentValue, 60, widthThumb / 2 + currentValue, 0, barThumbPointPaint);
+            canvas.drawCircle(mWidthThumb / 2 + mCurrentPosition, mBarHeight - mBarHeight / 8 + 45, mWidthThumb / 4, mBarThumbCyclePaint);
+            canvas.drawLine(mWidthThumb / 2 + mCurrentPosition, mBarHeight - mBarHeight / 8 + 45, mWidthThumb / 2 + mCurrentPosition, mBarHeight + 70, mBarThumbPointPaint);
+            canvas.drawText(milliSecondsToTimer(mTimeCurrent), mWidthThumb / 2 + mCurrentPosition, mBarHeight - mBarHeight / 8 + 45, mBarThumbTextPaint);
+            canvas.drawLine(mWidthThumb / 2 + mCurrentPosition, 60, mWidthThumb / 2 + mCurrentPosition, 0, mBarThumbPointPaint);
             invalidate();
 
         }
     }
 
-
+    /**
+     * @param bitmaps return array bitmaps
+     */
     public void setListBitmapBit(Bitmap... bitmaps) {
-        listBitmaps = new Bitmap[bitmaps.length];
-        DisplayMetrics displaymetrics = new DisplayMetrics();
-        ((MainActivity) mContext).getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
-        int mWidthScreen = displaymetrics.widthPixels;
+        mListBitmaps = new Bitmap[bitmaps.length];
         for (int i = 0; i < bitmaps.length; i++) {
-            listBitmaps[i] = reSizeImageView(bitmaps[i], mWidthScreen, barHeight);
+            mListBitmaps[i] = reSizeImageView(bitmaps[i], mWidthScreen, mBarHeight);
         }
     }
 
+    /**
+     * @param bitmap    return bitmap object
+     * @param widthImg  return width image bitmap
+     * @param heightImg return height image bitmap
+     * @return bitmap resized
+     */
     public Bitmap reSizeImageView(Bitmap bitmap, int widthImg, int heightImg) {
         int widthBitmap = bitmap.getWidth();
         int heightBitmap = bitmap.getHeight();
@@ -299,47 +294,48 @@ public class CustomSeekBarView extends View {
         return bitmapReSize;
     }
 
+    /**
+     * class update view
+     */
     private static final long DELAY_TIME_MILLIS = 1000L;
-    private boolean updateView = false;
+    // check status update view
+    private boolean mIsUpdateView = false;
     private UpdateViewRunnable updateViewRunnable = new UpdateViewRunnable();
     private Paint paint = new Paint();
-    private float count = 50;
-    private long timeCurrent = 0;
+    private float mCount = 0;
+    private long mTimeCurrent = 0;
 
     private class UpdateViewRunnable implements Runnable {
         public void run() {
 
-            if (isTouch) {
-                count = currentValue;
-                pointStart.setX((int) count);
-                updateView = true;
-                timeCurrent = ((currentValue * timeDuration) / (lengthRuler));
-                if (count > lengthRuler) {
-                    updateView = false;
+            if (mIsTouch) {
+                mCount = mCurrentPosition;
+                //   mPointStart.setX((int) mCount);
+                mIsUpdateView = true;
+                mTimeCurrent = ((mCurrentPosition * mTimeDuration) / (mLengthRuler));
+                if (mCount > mLengthRuler) {
+                    mIsUpdateView = false;
                 }
             } else {
-                if (count <= lengthRuler && timeCurrent <= timeDuration) {
-                    count = count + (lengthRuler * 1000 / (float) timeDuration);
-                    pointStart.setX((int) count);
-                    timeCurrent += DELAY_TIME_MILLIS;
+                if (mCount <= mLengthRuler && mTimeCurrent <= mTimeDuration) {
+                    mCount = mCount + (mLengthRuler * 1000 / (float) mTimeDuration);
+                    //    mPointStart.setX((int) mCount);
+                    mTimeCurrent += DELAY_TIME_MILLIS;
                     invalidate();
                 } else {
-                    updateView = false;
+                    mIsUpdateView = false;
                 }
             }
 
-            if (isEdit) {
-                pointStart.setX((int) count);
-                updateView = false;
+            if (mIsEdit) {
+                //  mPointStart.setX((int) mCount);
+                mIsUpdateView = false;
                 return;
 
             }
 
-            if (updateView)
-
-            {
+            if (mIsUpdateView) {
                 postDelayed(this, DELAY_TIME_MILLIS);
-                Log.d("tag", "update view" + updateView);
             }
         }
     }
@@ -347,50 +343,65 @@ public class CustomSeekBarView extends View {
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
-        updateView = true;
+        mIsUpdateView = true;
         postDelayed(updateViewRunnable, DELAY_TIME_MILLIS);
     }
 
     @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        updateView = false;
+        mIsUpdateView = false;
     }
 
-    private long timeDuration;
-
+    /**
+     * @param time return time duration of video
+     */
     public void setTimeDuration(long time) {
-        this.timeDuration = time;
+        this.mTimeDuration = time;
     }
 
+    /**
+     * @param milliseconds return time current of video
+     * @return
+     */
     private String milliSecondsToTimer(long milliseconds) {
         return TimeUnit.MILLISECONDS.toHours(milliseconds) > 0 ? (new SimpleDateFormat("HH:mm:ss",
                 Locale.getDefault())).format(new Date(milliseconds)) : (new SimpleDateFormat("mm:ss",
                 Locale.getDefault())).format(new Date(milliseconds));
     }
 
+    /**
+     * @param edit variable to check edit or not
+     */
     public void setIsEdit(boolean edit) {
-        isEdit = edit;
+        mIsEdit = edit;
     }
 
-    public void setIsDrawThumb(boolean drawThumb) {
-        isDrawThumb = drawThumb;
-    }
-
+    /**
+     * @param canvas canvas object
+     *               draw point start to drag and cut
+     */
     private void drawPointStart(Canvas canvas) {
-        canvas.drawLine(pointStart.getX(), 0, pointStart.getX(), barHeight + 70, barEditStartPaint);
+        canvas.drawLine(mPointStart.getX(), 0, mPointStart.getX(), mBarHeight + 51, mBarEditStartPaint);
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_edit);
-        canvas.drawBitmap(bitmap, pointStart.getX() - 26, (barHeight + 70) / 2, null);
+        canvas.drawBitmap(bitmap, mPointStart.getX() - (bitmap.getWidth() / 2), (mBarHeight) / 2, null);
         invalidate();
     }
 
+    /**
+     * @param canvas canvas object
+     *               draw point start to drag and cut
+     */
     private void drawPointEnd(Canvas canvas) {
-        canvas.drawLine(pointEnd.getX(), 0, pointEnd.getX(), barHeight + 70, barEditEndPaint);
+        canvas.drawLine(mPointEnd.getX(), 0, mPointEnd.getX(), mBarHeight + 51, mBarEditEndPaint);
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_edit);
-        canvas.drawBitmap(bitmap, pointEnd.getX() - 26, (barHeight + 70) / 2, null);
+        canvas.drawBitmap(bitmap, mPointEnd.getX() - (bitmap.getWidth() / 2), (mBarHeight) / 2, null);
         invalidate();
     }
 
+    /**
+     * class Points object
+     */
     private static class Points {
         private int x;
 
@@ -408,16 +419,14 @@ public class CustomSeekBarView extends View {
 
     }
 
-    private boolean stateSave = false;
-
-    public void setEditVideos(boolean state) {
-        this.stateSave = state;
-    }
-
+    /**
+     * @param canvas canvas object
+     *               draw area where you choose to cut video
+     */
     private void drawEditCurrent(Canvas canvas) {
-        barEditStartPaint.setColor(ContextCompat.getColor(mContext, R.color.colorThumb));
-        barEditStartPaint.setMaskFilter(new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL));
-        canvas.drawRect(pointStart.getX(), 0, pointEnd.getX(), barHeight + 70, barEditStartPaint);
+        mBarEditStartPaint.setColor(ContextCompat.getColor(mContext, R.color.colorThumb));
+        mBarEditStartPaint.setMaskFilter(new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL));
+        canvas.drawRect(mPointStart.getX(), (mBarHeight / 3), mPointEnd.getX(), mBarHeight + 51, mBarEditStartPaint);
         invalidate();
     }
 }
