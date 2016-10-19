@@ -13,6 +13,7 @@ import android.graphics.Paint;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 
 import static android.view.MotionEvent.ACTION_MOVE;
+import static android.view.MotionEvent.ACTION_UP;
 
 /**
  * Copyright © 2016 AsianTech inc.
@@ -187,7 +189,7 @@ public class CustomSeekBarView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
-            case ACTION_MOVE:
+            case ACTION_UP:
                 mCurrentPosition = (int) event.getX() - (mWidthThumb);
                 invalidate();
                 mIsTouch = true;
@@ -200,8 +202,13 @@ public class CustomSeekBarView extends View {
                         mPointEnd.setX(mCurrentPosition);
                         invalidate();
                     }
+                    else if(mPointEnd.getX()-mCurrentPosition>10 && mCurrentPosition-mPointStart.getX()>10){
+                        mPointStart.setX(mCurrentPosition);
+                        invalidate();
+                    }
                 } else {
-                    mPointStart.setX(mCurrentPosition);
+//                    mPointStart.setX(mCurrentPosition);
+                    invalidate();
                 }
                 break;
             default:
@@ -263,7 +270,6 @@ public class CustomSeekBarView extends View {
             canvas.drawText(milliSecondsToTimer(mTimeCurrent), mWidthThumb / 2 + mCurrentPosition, mBarHeight - mBarHeight / 8 + 45, mBarThumbTextPaint);
             canvas.drawLine(mWidthThumb / 2 + mCurrentPosition, 60, mWidthThumb / 2 + mCurrentPosition, 0, mBarThumbPointPaint);
             invalidate();
-
         }
     }
 
@@ -310,7 +316,6 @@ public class CustomSeekBarView extends View {
 
             if (mIsTouch) {
                 mCount = mCurrentPosition;
-                //   mPointStart.setX((int) mCount);
                 mIsUpdateView = true;
                 mTimeCurrent = ((mCurrentPosition * mTimeDuration) / (mLengthRuler));
                 if (mCount > mLengthRuler) {
@@ -319,7 +324,6 @@ public class CustomSeekBarView extends View {
             } else {
                 if (mCount <= mLengthRuler && mTimeCurrent <= mTimeDuration) {
                     mCount = mCount + (mLengthRuler * 1000 / (float) mTimeDuration);
-                    //    mPointStart.setX((int) mCount);
                     mTimeCurrent += DELAY_TIME_MILLIS;
                     invalidate();
                 } else {
