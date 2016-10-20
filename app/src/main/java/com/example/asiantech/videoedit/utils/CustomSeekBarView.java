@@ -80,6 +80,7 @@ public class CustomSeekBarView extends View {
 
     // time duration
     private long mTimeDuration;
+    private boolean mIsEditHard = false;
 
 
     public CustomSeekBarView(Context context) {
@@ -174,19 +175,29 @@ public class CustomSeekBarView extends View {
         drawBar(canvas);
         drawRulerTime(canvas);
         drawImage(canvas, mListBitmaps);
-        if (!mIsEdit) {
+        if (mIsEditHard) {
+            mPointStart.setX(mWidthThumb / 2 + dem);
+            mPointEnd.setX(mPointStart.getX() + mTextNumber);
+            drawEditCurrent(canvas);
+            drawPointStart(canvas);
+            drawPointEnd(canvas);
+            invalidate();
+        } else if (!mIsEdit) {
             drawThumb(canvas);
             invalidate();
         } else {
             drawEditCurrent(canvas);
             drawPointStart(canvas);
             drawPointEnd(canvas);
+            invalidate();
         }
     }
 
     private void drawBar(Canvas canvas) {
         canvas.drawRect(0, 0, getWidth(), mBarHeight, mBarBackgroundPaint);
     }
+
+    private int dem = 0;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -200,36 +211,19 @@ public class CustomSeekBarView extends View {
                     if (mCurrentPosition >= (mWidthThumb / 2)
                             && mCurrentPosition < (mPointEnd.getX() - (mWidthThumb * 2))) {
                         mPointStart.setX(mCurrentPosition);
-                        Log.d("tag", "aa");
                         invalidate();
                     } else if (mCurrentPosition > (mPointStart.getX() + mWidthThumb * 2)) {
                         mPointEnd.setX(mCurrentPosition);
-                        Log.d("tag", "bb");
                         invalidate();
                     }
                     return true;
                 }
-                break;
-            case ACTION_UP:
-                mCurrentPosition = (int) event.getX() - (mWidthThumb);
-                invalidate();
-                mIsTouch = true;
-                if (mIsEdit) {
-                    if (mCurrentPosition >= (mWidthThumb / 2)
-                            && mCurrentPosition < (mPointEnd.getX() - (mWidthThumb * 2))) {
-                        mPointStart.setX(mCurrentPosition);
-                        Log.d("tag", "aa");
-                        invalidate();
-                    } else if (mCurrentPosition > (mPointStart.getX() + mWidthThumb * 2)) {
-                        mPointEnd.setX(mCurrentPosition);
-                        Log.d("tag", "bb");
+                if (mIsEditHard) {
+                    if (mCurrentPosition > 0 && mCurrentPosition< (getWidth() - (mWidthThumb)-mTextNumber)) {
+                        dem = mCurrentPosition;
                         invalidate();
                     }
-
                 }
-                return true;
-            default:
-                mIsTouch = false;
                 break;
         }
 
@@ -326,9 +320,16 @@ public class CustomSeekBarView extends View {
     private float mCount = 0;
     private long mTimeCurrent = 0;
 
+    public void setIsEditHard(boolean isEditHard) {
+        this.mIsEditHard = isEditHard;
+    }
+
     private class UpdateViewRunnable implements Runnable {
         public void run() {
-
+            if (mIsEditHard) {
+                mIsUpdateView = false;
+                return;
+            }
             if (mIsTouch) {
                 mCount = mCurrentPosition;
                 //   mPointStart.setX((int) mCount);
@@ -337,6 +338,7 @@ public class CustomSeekBarView extends View {
                 if (mCount > mLengthRuler) {
                     mIsUpdateView = false;
                 }
+                mIsTouch = false;
             } else {
                 if (mCount <= mLengthRuler && mTimeCurrent <= mTimeDuration) {
                     mCount = mCount + (mLengthRuler * 1000 / (float) mTimeDuration);
@@ -449,5 +451,11 @@ public class CustomSeekBarView extends View {
         mBarEditStartPaint.setMaskFilter(new BlurMaskFilter(8, BlurMaskFilter.Blur.NORMAL));
         canvas.drawRect(mPointStart.getX(), (mBarHeight / 3), mPointEnd.getX(), mBarHeight + 51, mBarEditStartPaint);
         invalidate();
+    }
+
+    private int mTextNumber = 0;
+
+    public void setTextNumber(int number) {
+        this.mTextNumber = number;
     }
 }

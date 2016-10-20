@@ -6,6 +6,19 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <EditText
+        android:id="@+id/edtNumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:id="@+id/btnCut"
+        android:text="Cut position" />
     <VideoView
         android:id="@+id/videoView"
         android:layout_width="match_parent"
@@ -18,5 +31,6 @@
         android:padding="10dp"
         app:barHeight="@dimen/value_bar_barHeight"
         app:widthThumb="@dimen/value_bar_thumb_width" />
+
 
 </LinearLayout>
