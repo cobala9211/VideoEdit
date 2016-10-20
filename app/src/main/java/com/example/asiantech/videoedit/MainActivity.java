@@ -7,8 +7,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
@@ -17,12 +21,16 @@ import com.example.asiantech.videoedit.utils.CustomSeekBarView;
 
 public class MainActivity extends AppCompatActivity {
     private CustomSeekBarView seekBarLayout;
+    private EditText mEdtNumber;
+    private Button mBtnCut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         seekBarLayout = (CustomSeekBarView) findViewById(R.id.valueBar);
+        mEdtNumber = (EditText) findViewById(R.id.edtNumber);
+        mBtnCut = (Button) findViewById(R.id.btnCut);
         int[] arrImg = {R.mipmap.images, R.mipmap.images, R.mipmap.images, R.mipmap.images};
         Bitmap[] arrBitmaps = new Bitmap[arrImg.length];
         DisplayMetrics displaymetrics = new DisplayMetrics();
@@ -49,7 +57,14 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        mBtnCut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                seekBarLayout.setIsEditHard(true);
+                seekBarLayout.setTextNumber(Integer.valueOf(mEdtNumber.getText().toString()));
+                seekBarLayout.setIsEdit(false);
+            }
+        });
     }
 
     @Override
@@ -57,9 +72,15 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.mnuPlayVideo:
                 seekBarLayout.setIsEdit(false);
+                seekBarLayout.setIsEditHard(false);
                 break;
             case R.id.mnuEditVideo:
                 seekBarLayout.setIsEdit(true);
+                seekBarLayout.setIsEditHard(false);
+                break;
+            case R.id.mnuEditVideos:
+                mBtnCut.setVisibility(View.VISIBLE);
+                mEdtNumber.setVisibility(View.VISIBLE);
                 break;
             default:
                 break;

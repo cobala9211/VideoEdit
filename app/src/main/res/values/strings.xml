@@ -6,6 +6,6 @@
     <string name="valueSelector_label">VALUE</string>
     <string name="valueBarLabel">CURRENT VALUE</string>
     <string name="menu_item_play_video">Play video</string>
-    <string name="menu_item_edit_video">Edit Video</string>
-    <string name="menu_item_save_state">Edit Videos</string>
+    <string name="menu_item_edit_videos">Edit Videos</string>
+    <string name="menu_item_edit_video">Edit video</string>
 </resources>
