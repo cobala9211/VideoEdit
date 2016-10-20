@@ -191,7 +191,6 @@ public class CustomSeekBarView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
-
             case ACTION_MOVE:
                 mCurrentPosition = (int) event.getX() - (mWidthThumb);
                 invalidate();
