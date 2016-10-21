@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/activity_main"
@@ -10,15 +9,15 @@
         android:id="@+id/edtNumber"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
-        />
+        android:visibility="invisible" />
 
     <Button
+        android:id="@+id/btnCut"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
-        android:id="@+id/btnCut"
-        android:text="Cut position" />
+        android:text="Cut position"
+        android:visibility="invisible" />
+
     <VideoView
         android:id="@+id/videoView"
         android:layout_width="match_parent"
@@ -31,6 +30,4 @@
         android:padding="10dp"
         app:barHeight="@dimen/value_bar_barHeight"
         app:widthThumb="@dimen/value_bar_thumb_width" />
-
-
 </LinearLayout>
