@@ -3,25 +3,32 @@ package com.example.asiantech.videoedit;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.MediaController;
-import android.widget.VideoView;
+import android.widget.Toast;
 
+import com.example.asiantech.videoedit.listeners.IPlayVideoListener;
 import com.example.asiantech.videoedit.utils.CustomSeekBarView;
+import com.example.asiantech.videoedit.utils.CustomVideoView;
 
 
 public class MainActivity extends AppCompatActivity {
     private CustomSeekBarView seekBarLayout;
     private EditText mEdtNumber;
     private Button mBtnCut;
+    private long mTimeDurationVideo;
+    public static boolean mIsSeekTo = false;
+    public static int mTimeSeekTo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,31 +47,69 @@ public class MainActivity extends AppCompatActivity {
         }
 
         seekBarLayout.setListBitmapBit(arrBitmaps);
-        VideoView videoView = (VideoView) findViewById(R.id.videoView);
-        MediaController mediaControls = new MediaController(this);
+        final CustomVideoView videoView = (CustomVideoView) findViewById(R.id.videoView);
+        final MediaController mediaControls = new MediaController(this);
 
         try {
             Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.video);
             MediaMetadataRetriever retriever = new MediaMetadataRetriever();
             retriever.setDataSource(this, uri);
             String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            long timeTotalVideo = Long.parseLong(time);
-            seekBarLayout.setTimeDuration(timeTotalVideo);
+            mTimeDurationVideo = Long.parseLong(time);
+            seekBarLayout.setTimeDuration(mTimeDurationVideo);
             assert videoView != null;
+            videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    videoView.start();
+                    seekBarLayout.setIsUpdateView(true);
+                    seekBarLayout.mTimeCurrent = 0;
+                }
+            });
+
+            videoView.setPlayPauseListener(new IPlayVideoListener() {
+                @Override
+                public void onPlay() {
+                    Log.d("tag", "on PLay");
+                    seekBarLayout.mIsPLay = true;
+                }
+
+                @Override
+                public void onPause() {
+                    Log.d("tag", "on Pause");
+                    seekBarLayout.mIsPLay = false;
+                }
+
+                @Override
+                public void seekTo(int time) {
+                    if (mIsSeekTo) {
+                        time = mTimeSeekTo;
+                        Log.d("tag", "time" + time);
+                    }
+//                    Log.d("time", "time" + time);
+//                    Log.d("time", "duration" + mTimeDurationVideo);
+//                    seekBarLayout.mIsSeekTo = true;
+//                    seekBarLayout.mTimeCurrent = time;
+                }
+            });
             videoView.setMediaController(mediaControls);
             videoView.setVideoURI(uri);
-            videoView.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
         mBtnCut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                seekBarLayout.setIsEditHard(true);
-                seekBarLayout.setTextNumber(Integer.valueOf(mEdtNumber.getText().toString()));
-                seekBarLayout.setIsEdit(false);
+                if (Long.valueOf(mEdtNumber.getText().toString()) > mTimeDurationVideo) {
+                    Toast.makeText(getApplicationContext(), "over time duration of video", Toast.LENGTH_SHORT).show();
+                } else {
+                    seekBarLayout.setIsEditHard(true);
+                    seekBarLayout.setTimesToCut(Integer.valueOf(mEdtNumber.getText().toString()));
+                    seekBarLayout.setIsEdit(false);
+                }
             }
         });
+
     }
 
     @Override

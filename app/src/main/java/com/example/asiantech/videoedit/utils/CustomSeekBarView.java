@@ -16,7 +16,9 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.SeekBar;
 
+import com.example.asiantech.videoedit.MainActivity;
 import com.example.asiantech.videoedit.R;
 
 import java.text.SimpleDateFormat;
@@ -30,7 +32,7 @@ import static android.view.MotionEvent.ACTION_MOVE;
  * Copyright © 2016 AsianTech inc.
  * Created by PhuongDN on 15/10/2016.
  */
-public class CustomSeekBarView extends View {
+public class CustomSeekBarView extends SeekBar {
 
     private int mCurrentPosition = 0;
     private int mBarHeight;
@@ -111,6 +113,7 @@ public class CustomSeekBarView extends View {
         Paint mBarBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBarBackgroundPaint.setColor(Color.BLACK);
         mBarFramePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mBarFramePaint.setColor(Color.BLACK);
 
         paint.setColor(Color.BLACK);
         paint.setTextSize(80);
@@ -160,16 +163,21 @@ public class CustomSeekBarView extends View {
         mWidthScreen = displaymetrics.widthPixels;
         mPointStart = new Points(mWidthThumb / 4);
         mPointEnd = new Points(mWidthScreen - (mWidthThumb / 4));
+
     }
 
+    private int mDistancesToCut = 0;
+    private int mCountDistancesToCut = 0;
 
     @Override
     protected void onDraw(final Canvas canvas) {
         drawRulerTime(canvas);
+        // drawView(canvas, mListBitmaps);
         drawImage(canvas, mListBitmaps);
         if (mIsEditHard) {
-            mPointStart.setX(mWidthThumb / 4 + dem);
-            mPointEnd.setX(mPointStart.getX() + mTextNumber);
+            mDistancesToCut = (int) ((mTimesToCut * mLengthRuler) / (int) (mTimeDuration / 1000));
+            mPointStart.setX(mWidthThumb / 4 + mCountDistancesToCut);
+            mPointEnd.setX(mPointStart.getX() + mDistancesToCut);
             drawEditCurrent(canvas);
             drawPointStart(canvas);
             drawPointEnd(canvas);
@@ -185,8 +193,6 @@ public class CustomSeekBarView extends View {
         }
     }
 
-    private int dem = 0;
-
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction() & MotionEvent.ACTION_MASK) {
@@ -194,6 +200,8 @@ public class CustomSeekBarView extends View {
                 mCurrentPosition = (int) event.getX() - (mWidthThumb / 2);
                 invalidate();
                 mIsTouch = true;
+                MainActivity.mIsSeekTo = true;
+                MainActivity.mTimeSeekTo = (int) ((mCurrentPosition*(mTimeDuration/1000)) / (mLengthRuler));
                 if (mCurrentPosition < 0) {
                     mCurrentPosition = 0;
                 } else if (mCurrentPosition > mLengthRuler - (mWidthThumb / 2)) {
@@ -217,17 +225,13 @@ public class CustomSeekBarView extends View {
                 }
                 if (mIsEditHard) {
                     if (mCurrentPosition <= mWidthThumb / 4) {
-                        dem = 0;
-                        Log.d("tag", "a");
-                    } else if (mCurrentPosition > 0 && mCurrentPosition <= (mLengthRuler - mTextNumber)) {
-                        dem = mCurrentPosition;
-                        Log.d("tag", "b");
+                        mCountDistancesToCut = 0;
+                    } else if (mCurrentPosition > 0 && mCurrentPosition <= (mLengthRuler - mDistancesToCut)) {
+                        mCountDistancesToCut = mCurrentPosition;
                         invalidate();
                     } else {
-                        dem = mLengthRuler - mTextNumber;
-                        Log.d("tag", "c");
+                        mCountDistancesToCut = mLengthRuler - mDistancesToCut;
                     }
-
 
                 }
                 break;
@@ -241,7 +245,7 @@ public class CustomSeekBarView extends View {
      * @param bitmaps return each bitmap object to draw
      */
     public void drawImage(Canvas canvas, Bitmap... bitmaps) {
-        int widthImage = mWidthScreen / bitmaps.length;
+        int widthImage = mLengthRuler / bitmaps.length;
         for (int i = 0; i < bitmaps.length; i++) {
             canvas.drawBitmap(bitmaps[i], i * widthImage, mBarHeight / 3,
                     mBarFramePaint);
@@ -318,14 +322,21 @@ public class CustomSeekBarView extends View {
      */
     private static final long DELAY_TIME_MILLIS = 1000L;
     // check status update view
-    private boolean mIsUpdateView = false;
+    public boolean mIsUpdateView = false;
     private UpdateViewRunnable updateViewRunnable = new UpdateViewRunnable();
     private Paint paint = new Paint();
     private float mCount = 0;
-    private long mTimeCurrent = 0;
+    public long mTimeCurrent;
+    public boolean mIsPLay = false;
+    public boolean mIsSeekTo = false;
+
 
     public void setIsEditHard(boolean isEditHard) {
         this.mIsEditHard = isEditHard;
+    }
+
+    public void setIsUpdateView(boolean isUpdateView) {
+        this.mIsUpdateView = isUpdateView;
     }
 
     private class UpdateViewRunnable implements Runnable {
@@ -336,19 +347,37 @@ public class CustomSeekBarView extends View {
             }
             if (mIsTouch) {
                 mCount = mCurrentPosition;
-                mIsUpdateView = true;
                 mTimeCurrent = ((mCurrentPosition * mTimeDuration) / (mLengthRuler));
                 mIsTouch = false;
-            } else {
-                if (mCount <= mLengthRuler && mTimeCurrent <= mTimeDuration) {
-                    mCount = mCount + (mLengthRuler * 1000 / (float) mTimeDuration);
-                    mTimeCurrent += DELAY_TIME_MILLIS;
-                    invalidate();
+            }
+            // in this case , is not touch
+            else {
+                Log.d("tag", "update view" + mIsUpdateView);
+                if (mIsPLay) {
+                    if (mTimeCurrent <= mTimeDuration) {
+                        mTimeCurrent += DELAY_TIME_MILLIS;
+                        mCount = mCount + (mLengthRuler * 1000 / (float) mTimeDuration);
+                        Log.d("tag", "time curent " + mTimeCurrent);
+                        Log.d("tag", "update view " + mIsUpdateView);
+                        Log.d("tag", "seek bar is working ");
+                        invalidate();
+                    }
+                }
+                if (mIsSeekTo) {
+                    mCount = ((mTimeCurrent) * mLengthRuler) / (mTimeDuration);
+                    Log.d("tag", "time current " + mTimeCurrent);
+                    Log.d("tag", "time duration " + mTimeDuration);
+                    Log.d("tag", "seek to");
+                } else {
+                    // no-op
+                    Log.d("tag", " seek bar i be stopped");
+                    Log.d("tag", "update view" + mIsUpdateView);
+                    Log.d("tag", "time current " + mTimeCurrent);
                 }
             }
 
             if (mIsEdit) {
-                mIsUpdateView = false;
+                setIsUpdateView(false);
                 return;
 
             }
@@ -362,14 +391,14 @@ public class CustomSeekBarView extends View {
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
-        mIsUpdateView = true;
+        setIsUpdateView(true);
         postDelayed(updateViewRunnable, DELAY_TIME_MILLIS);
     }
 
     @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        mIsUpdateView = false;
+        setIsUpdateView(false);
     }
 
     /**
@@ -449,9 +478,10 @@ public class CustomSeekBarView extends View {
         invalidate();
     }
 
-    private int mTextNumber = 0;
+    // get times to cut video
+    private long mTimesToCut = 0;
 
-    public void setTextNumber(int number) {
-        this.mTextNumber = number;
+    public void setTimesToCut(long timesToCut) {
+        this.mTimesToCut = timesToCut;
     }
 }
