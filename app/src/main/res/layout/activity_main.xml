@@ -18,7 +18,8 @@
         android:text="Cut position"
         android:visibility="invisible" />
 
-    <VideoView
+
+    <com.example.asiantech.videoedit.utils.CustomVideoView
         android:id="@+id/videoView"
         android:layout_width="match_parent"
         android:layout_height="@dimen/video_view_height" />
