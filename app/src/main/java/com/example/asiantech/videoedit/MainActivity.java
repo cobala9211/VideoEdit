@@ -6,6 +6,7 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -18,6 +19,7 @@ import android.widget.MediaController;
 import android.widget.Toast;
 
 import com.example.asiantech.videoedit.listeners.IPlayVideoListener;
+import com.example.asiantech.videoedit.listeners.ISendTime;
 import com.example.asiantech.videoedit.utils.CustomSeekBarView;
 import com.example.asiantech.videoedit.utils.CustomVideoView;
 
@@ -27,8 +29,18 @@ public class MainActivity extends AppCompatActivity {
     private EditText mEdtNumber;
     private Button mBtnCut;
     private long mTimeDurationVideo;
-    public static boolean mIsSeekTo = false;
-    public static int mTimeSeekTo;
+    Handler mHandler;
+    int mTimeStart;
+    int mTimeEnd;
+    CustomVideoView videoView;
+    MediaController mediaControls;
+
+    Runnable stopVideo = new Runnable() {
+        @Override
+        public void run() {
+            videoView.pause();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +59,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         seekBarLayout.setListBitmapBit(arrBitmaps);
-        final CustomVideoView videoView = (CustomVideoView) findViewById(R.id.videoView);
-        final MediaController mediaControls = new MediaController(this);
+        videoView = (CustomVideoView) findViewById(R.id.videoView);
+        mediaControls = new MediaController(this);
 
         try {
             Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.video);
@@ -61,11 +73,23 @@ public class MainActivity extends AppCompatActivity {
             videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    videoView.start();
                     seekBarLayout.setIsUpdateView(true);
                     seekBarLayout.mTimeCurrent = 0;
+                    videoView.start();
                 }
             });
+            mHandler = new Handler();
+            Log.d("time", "time start" + mTimeStart);
+            Log.d("time", "time end " + mTimeEnd);
+            seekBarLayout.setSendTimeListener(new ISendTime() {
+                @Override
+                public void timeToCut(int timeX, int timeY) {
+                    videoView.seekTo(timeX * 1000);
+                    videoView.postDelayed(stopVideo, timeY * 1000);
+
+                }
+            });
+
 
             videoView.setPlayPauseListener(new IPlayVideoListener() {
                 @Override
@@ -82,16 +106,12 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void seekTo(int time) {
-                    if (mIsSeekTo) {
-                        time = mTimeSeekTo;
-                        Log.d("tag", "time" + time);
-                    }
-//                    Log.d("time", "time" + time);
-//                    Log.d("time", "duration" + mTimeDurationVideo);
-//                    seekBarLayout.mIsSeekTo = true;
-//                    seekBarLayout.mTimeCurrent = time;
+                    Log.d("tag", "time" + time);
+                    seekBarLayout.mIsSeekTo = true;
+                    seekBarLayout.mTimeCurrent = time;
                 }
             });
+            mediaControls.setAnchorView(videoView);
             videoView.setMediaController(mediaControls);
             videoView.setVideoURI(uri);
         } catch (Exception e) {
@@ -100,9 +120,12 @@ public class MainActivity extends AppCompatActivity {
         mBtnCut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (Long.valueOf(mEdtNumber.getText().toString()) > mTimeDurationVideo) {
-                    Toast.makeText(getApplicationContext(), "over time duration of video", Toast.LENGTH_SHORT).show();
+                if (Long.valueOf(mEdtNumber.getText().toString()) > (mTimeDurationVideo / 1000)) {
+                    //  seekBarLayout.mIsTouch = false;
+                    Toast.makeText(getApplicationContext(),
+                            "over time duration of video", Toast.LENGTH_SHORT).show();
                 } else {
+                    // seekBarLayout.mIsTouch = true;
                     seekBarLayout.setIsEditHard(true);
                     seekBarLayout.setTimesToCut(Integer.valueOf(mEdtNumber.getText().toString()));
                     seekBarLayout.setIsEdit(false);
@@ -110,7 +133,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -118,6 +143,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.mnuPlayVideo:
                 mBtnCut.setVisibility(View.GONE);
                 mEdtNumber.setVisibility(View.GONE);
+                seekBarLayout.mIsUpdateView = true;
                 seekBarLayout.setIsEdit(false);
                 seekBarLayout.setIsEditHard(false);
                 break;
@@ -141,5 +167,12 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_edit, menu);
         return true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d("tag", "onresume ");
+
     }
 }
