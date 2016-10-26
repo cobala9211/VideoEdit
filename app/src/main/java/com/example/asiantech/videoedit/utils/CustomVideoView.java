@@ -56,5 +56,4 @@ public class CustomVideoView extends VideoView {
         }
     }
 
-
 }

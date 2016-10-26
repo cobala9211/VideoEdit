@@ -17,12 +17,15 @@
         android:layout_height="wrap_content"
         android:text="Cut position"
         android:visibility="invisible" />
-
-
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
     <com.example.asiantech.videoedit.utils.CustomVideoView
         android:id="@+id/videoView"
         android:layout_width="match_parent"
         android:layout_height="@dimen/video_view_height" />
+</FrameLayout>
+
 
     <com.example.asiantech.videoedit.utils.CustomSeekBarView
         android:id="@+id/valueBar"

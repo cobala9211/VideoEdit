@@ -16,10 +16,9 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.SeekBar;
 
-import com.example.asiantech.videoedit.MainActivity;
 import com.example.asiantech.videoedit.R;
+import com.example.asiantech.videoedit.listeners.ISendTime;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,7 +31,7 @@ import static android.view.MotionEvent.ACTION_MOVE;
  * Copyright © 2016 AsianTech inc.
  * Created by PhuongDN on 15/10/2016.
  */
-public class CustomSeekBarView extends SeekBar {
+public class CustomSeekBarView extends View {
 
     private int mCurrentPosition = 0;
     private int mBarHeight;
@@ -47,7 +46,7 @@ public class CustomSeekBarView extends SeekBar {
     private Bitmap[] mListBitmaps;
 
     // touch
-    private boolean mIsTouch = false;
+    public boolean mIsTouch = false;
 
 
     private Paint mBarThumbCyclePaint;
@@ -58,7 +57,7 @@ public class CustomSeekBarView extends SeekBar {
     private Paint mBarRulerTextPaint;
 
     // edit
-    private boolean mIsEdit = false;
+    public boolean mIsEdit = false;
 
     private Paint mBarEditStartPaint;
     private Paint mBarEditEndPaint;
@@ -75,7 +74,8 @@ public class CustomSeekBarView extends SeekBar {
 
     // time duration
     private long mTimeDuration;
-    private boolean mIsEditHard = false;
+    public boolean mIsEditHard = false;
+    private ISendTime mISendTime;
 
 
     public CustomSeekBarView(Context context) {
@@ -83,6 +83,12 @@ public class CustomSeekBarView extends SeekBar {
         init(context, null);
         this.mContext = context;
     }
+
+    // set listener
+    public void setSendTimeListener(ISendTime iSendTime) {
+        mISendTime = iSendTime;
+    }
+
 
     public CustomSeekBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -172,7 +178,6 @@ public class CustomSeekBarView extends SeekBar {
     @Override
     protected void onDraw(final Canvas canvas) {
         drawRulerTime(canvas);
-        // drawView(canvas, mListBitmaps);
         drawImage(canvas, mListBitmaps);
         if (mIsEditHard) {
             mDistancesToCut = (int) ((mTimesToCut * mLengthRuler) / (int) (mTimeDuration / 1000));
@@ -200,13 +205,14 @@ public class CustomSeekBarView extends SeekBar {
                 mCurrentPosition = (int) event.getX() - (mWidthThumb / 2);
                 invalidate();
                 mIsTouch = true;
-                MainActivity.mIsSeekTo = true;
-                MainActivity.mTimeSeekTo = (int) ((mCurrentPosition*(mTimeDuration/1000)) / (mLengthRuler));
                 if (mCurrentPosition < 0) {
                     mCurrentPosition = 0;
                 } else if (mCurrentPosition > mLengthRuler - (mWidthThumb / 2)) {
                     mCurrentPosition = mLengthRuler;
                 }
+
+                mISendTime.
+                        timeToCut((int) ((mCurrentPosition * (mTimeDuration / 1000)) / (mLengthRuler)), (int) (mTimeDuration / 1000));
                 if (mIsEdit) {
                     if (mCurrentPosition < (mPointEnd.getX() - (mWidthThumb * 2))) {
                         if (mCurrentPosition <= (mWidthThumb / 4)) {
@@ -221,6 +227,11 @@ public class CustomSeekBarView extends SeekBar {
                         mPointEnd.setX(mCurrentPosition);
                         invalidate();
                     }
+                    mISendTime.timeToCut((int) (((mPointStart.getX()) * (mTimeDuration / 1000)) / (mLengthRuler)),
+                            (int) (((mPointEnd.getX()) * (mTimeDuration / 1000)) / (mLengthRuler)));
+                    Log.d("tag", "cut video");
+                    Log.d("tag", "X " + ((mPointStart.getX()) * (mTimeDuration / 1000)) / (mLengthRuler));
+                    Log.d("tag", "Y " + ((mPointEnd.getX()) * (mTimeDuration / 1000)) / (mLengthRuler));
                     return true;
                 }
                 if (mIsEditHard) {
@@ -232,6 +243,12 @@ public class CustomSeekBarView extends SeekBar {
                     } else {
                         mCountDistancesToCut = mLengthRuler - mDistancesToCut;
                     }
+                    mISendTime.timeToCut((int) (((mCountDistancesToCut) * (mTimeDuration / 1000)) / (mLengthRuler)),
+                            (int) (((mCountDistancesToCut +
+                                    mDistancesToCut) * (mTimeDuration / 1000)) / (mLengthRuler)));
+                    Log.d("edit", String.valueOf(((mCountDistancesToCut) * (mTimeDuration / 1000)) / (mLengthRuler)));
+                    Log.d("edit", String.valueOf(((mCountDistancesToCut +
+                            mDistancesToCut) * (mTimeDuration / 1000)) / (mLengthRuler)));
 
                 }
                 break;
@@ -341,12 +358,13 @@ public class CustomSeekBarView extends SeekBar {
 
     private class UpdateViewRunnable implements Runnable {
         public void run() {
-            if (mIsEditHard) {
-                mIsUpdateView = false;
-                return;
-            }
+            //  if (mIsEditHard) {
+            //  mIsUpdateView = false;
+            // return;
+            // }
             if (mIsTouch) {
                 mCount = mCurrentPosition;
+                mIsUpdateView = true;
                 mTimeCurrent = ((mCurrentPosition * mTimeDuration) / (mLengthRuler));
                 mIsTouch = false;
             }
@@ -376,11 +394,11 @@ public class CustomSeekBarView extends SeekBar {
                 }
             }
 
-            if (mIsEdit) {
-                setIsUpdateView(false);
-                return;
+            //if (mIsEdit) {
+            //  setIsUpdateView(false);
+            //  return;
 
-            }
+            //  }
 
             if (mIsUpdateView) {
                 postDelayed(this, DELAY_TIME_MILLIS);
