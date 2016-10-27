@@ -56,4 +56,11 @@ public class CustomVideoView extends VideoView {
         }
     }
 
+    @Override
+    public void stopPlayback() {
+        super.stopPlayback();
+        if (mIPlayVideoListener != null) {
+            mIPlayVideoListener.onStop();
+        }
+    }
 }
