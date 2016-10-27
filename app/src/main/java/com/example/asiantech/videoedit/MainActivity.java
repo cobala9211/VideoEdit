@@ -25,15 +25,15 @@ import com.example.asiantech.videoedit.utils.CustomVideoView;
 
 
 public class MainActivity extends AppCompatActivity {
-    private CustomSeekBarView seekBarLayout;
-    private EditText mEdtNumber;
+    private CustomSeekBarView mSeekBarCustomLayout;
+    private EditText mEdtTimeToCut;
     private Button mBtnCut;
     private long mTimeDurationVideo;
-    Handler mHandler;
-    int mTimeStart;
-    int mTimeEnd;
-    CustomVideoView videoView;
-    MediaController mediaControls;
+    private Handler mHandler;
+    private int mTimeStart;
+    private int mTimeEnd;
+    private CustomVideoView videoView;
+    private MediaController mediaControls;
 
     Runnable stopVideo = new Runnable() {
         @Override
@@ -46,8 +46,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        seekBarLayout = (CustomSeekBarView) findViewById(R.id.valueBar);
-        mEdtNumber = (EditText) findViewById(R.id.edtNumber);
+        mSeekBarCustomLayout = (CustomSeekBarView) findViewById(R.id.valueBar);
+        mEdtTimeToCut = (EditText) findViewById(R.id.edtNumber);
         mBtnCut = (Button) findViewById(R.id.btnCut);
         int[] arrImg = {R.mipmap.images, R.mipmap.images, R.mipmap.images, R.mipmap.images};
         Bitmap[] arrBitmaps = new Bitmap[arrImg.length];
@@ -58,35 +58,36 @@ public class MainActivity extends AppCompatActivity {
             arrBitmaps[i] = bitmap;
         }
 
-        seekBarLayout.setListBitmapBit(arrBitmaps);
+        mSeekBarCustomLayout.setListBitmapBit(arrBitmaps);
         videoView = (CustomVideoView) findViewById(R.id.videoView);
         mediaControls = new MediaController(this);
-
+        mHandler = new Handler();
         try {
             Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.video);
             MediaMetadataRetriever retriever = new MediaMetadataRetriever();
             retriever.setDataSource(this, uri);
             String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
             mTimeDurationVideo = Long.parseLong(time);
-            seekBarLayout.setTimeDuration(mTimeDurationVideo);
+            mSeekBarCustomLayout.setTimeDuration(mTimeDurationVideo);
             assert videoView != null;
             videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    seekBarLayout.setIsUpdateView(true);
-                    seekBarLayout.mTimeCurrent = 0;
+                    mSeekBarCustomLayout.setIsUpdateView(true);
+                    mSeekBarCustomLayout.mTimeCurrent = 0;
                     videoView.start();
                 }
             });
-            mHandler = new Handler();
-            Log.d("time", "time start" + mTimeStart);
-            Log.d("time", "time end " + mTimeEnd);
-            seekBarLayout.setSendTimeListener(new ISendTime() {
+
+            mSeekBarCustomLayout.setSendTimeListener(new ISendTime() {
                 @Override
                 public void timeToCut(int timeX, int timeY) {
                     videoView.seekTo(timeX * 1000);
-                    videoView.postDelayed(stopVideo, timeY * 1000);
-
+                    mHandler.postDelayed(stopVideo, timeY * 1000);
+                    mTimeStart = timeX * 1000;
+                    mTimeEnd = timeY * 1000;
+                    Log.d("tag", "time start " + mTimeStart);
+                    Log.d("tag", "time end " + mTimeEnd);
                 }
             });
 
@@ -95,20 +96,35 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onPlay() {
                     Log.d("tag", "on PLay");
-                    seekBarLayout.mIsPLay = true;
+                    if (mSeekBarCustomLayout.mIsCut || mSeekBarCustomLayout.mIsCutWithTimes) {
+                        videoView.seekTo(mTimeStart);
+                        Log.d("tag", "cut");
+                        // mHandler.postDelayed(stopVideo, mTimeEnd);
+                        Log.d("tag", "time start" + mTimeStart);
+                        Log.d("tag", "time end" + mTimeEnd);
+                    } else {
+                        mSeekBarCustomLayout.mIsPLay = true;
+                        // TODO send current pos for customseekbarview class
+                        mSeekBarCustomLayout.mTimeCurrent = videoView.getCurrentPosition();
+                    }
                 }
 
                 @Override
                 public void onPause() {
                     Log.d("tag", "on Pause");
-                    seekBarLayout.mIsPLay = false;
+                    mSeekBarCustomLayout.mIsPLay = false;
                 }
 
                 @Override
                 public void seekTo(int time) {
                     Log.d("tag", "time" + time);
-                    seekBarLayout.mIsSeekTo = true;
-                    seekBarLayout.mTimeCurrent = time;
+                    mSeekBarCustomLayout.mIsSeekTo = true;
+                    mSeekBarCustomLayout.mTimeCurrent = time;
+                }
+
+                @Override
+                public void onStop() {
+                    Log.d("tag", "stop");
                 }
             });
             mediaControls.setAnchorView(videoView);
@@ -120,15 +136,15 @@ public class MainActivity extends AppCompatActivity {
         mBtnCut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (Long.valueOf(mEdtNumber.getText().toString()) > (mTimeDurationVideo / 1000)) {
-                    //  seekBarLayout.mIsTouch = false;
+                if (Long.valueOf(mEdtTimeToCut.getText().toString()) > (mTimeDurationVideo / 1000)) {
+                    //  mSeekBarCustomLayout.mIsTouch = false;
                     Toast.makeText(getApplicationContext(),
                             "over time duration of video", Toast.LENGTH_SHORT).show();
                 } else {
-                    // seekBarLayout.mIsTouch = true;
-                    seekBarLayout.setIsEditHard(true);
-                    seekBarLayout.setTimesToCut(Integer.valueOf(mEdtNumber.getText().toString()));
-                    seekBarLayout.setIsEdit(false);
+                    // mSeekBarCustomLayout.mIsTouch = true;
+                    mSeekBarCustomLayout.setIsCutWithTime(true);
+                    mSeekBarCustomLayout.setTimesToCut(Integer.valueOf(mEdtTimeToCut.getText().toString()));
+                    mSeekBarCustomLayout.setIsCut(false);
                 }
             }
         });
@@ -142,20 +158,20 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.mnuPlayVideo:
                 mBtnCut.setVisibility(View.GONE);
-                mEdtNumber.setVisibility(View.GONE);
-                seekBarLayout.mIsUpdateView = true;
-                seekBarLayout.setIsEdit(false);
-                seekBarLayout.setIsEditHard(false);
+                mEdtTimeToCut.setVisibility(View.GONE);
+                mSeekBarCustomLayout.mIsUpdateView = true;
+                mSeekBarCustomLayout.setIsCut(false);
+                mSeekBarCustomLayout.setIsCutWithTime(false);
                 break;
             case R.id.mnuEditVideo:
                 mBtnCut.setVisibility(View.GONE);
-                mEdtNumber.setVisibility(View.GONE);
-                seekBarLayout.setIsEdit(true);
-                seekBarLayout.setIsEditHard(false);
+                mEdtTimeToCut.setVisibility(View.GONE);
+                mSeekBarCustomLayout.setIsCut(true);
+                mSeekBarCustomLayout.setIsCutWithTime(false);
                 break;
             case R.id.mnuEditVideos:
                 mBtnCut.setVisibility(View.VISIBLE);
-                mEdtNumber.setVisibility(View.VISIBLE);
+                mEdtTimeToCut.setVisibility(View.VISIBLE);
                 break;
             default:
                 break;
@@ -173,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.d("tag", "onresume ");
+
 
     }
 }
