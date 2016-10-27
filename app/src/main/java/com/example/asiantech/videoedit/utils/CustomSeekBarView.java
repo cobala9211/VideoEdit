@@ -425,7 +425,6 @@ public class CustomSeekBarView extends View {
             }
         }
     }
-
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
